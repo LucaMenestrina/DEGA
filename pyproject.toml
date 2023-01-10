@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools", "wheel", "Cython", "pythran", "scipy", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DEGA"
+version = "0.1.0"
+authors =[{name = "Luca Menestrina", email = "luca.menestrina@protonmail.com"}]
+description = "DEGA: a Python package for differential gene expression analysis"
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Cython",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+]
+keywords = []
+requires-python = ">=3.8"
+dependencies = [
+    "matplotlib >= 3.6.2",
+    "networkx >= 2.8.8",
+    "numpy >= 1.24.1",
+    "pandas >= 1.5.2",
+    "patsy >= 0.5.2",
+    "scikit-learn >= 1.2.0",
+    "scipy >= 1.9.3",
+    "seaborn >= 0.12.1",
+    "statsmodels >= 0.13.5",
+]
+[project.urls]
+homepage = "https://github.com/LucaMenestrina/DEGA"
+source = "https://github.com/LucaMenestrina/DEGA"
+tracker = "https://github.com/LucaMenestrina/DEGA/issues"

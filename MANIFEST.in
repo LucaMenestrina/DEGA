@@ -1,0 +1,6 @@
+include DEGA/cython/estimateDispersion.pyx
+include DEGA/cython/negativeBinomialGLM.pyx
+
+recursive-include DEGA *.py
+
+exclude DEGA/cython/setup.py
