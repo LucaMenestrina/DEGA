@@ -112,7 +112,7 @@ def plotMA(testResults, baseMean, pValueThreshold=0.05, lfcThreshold=0, boundedY
                                        markeredgecolor="lime", label="Highlighted Genes")]
         plt.legend(handles=custom_elements, fontsize="x-small")
     plt.ylabel(LFCColumnName)  # M
-    plt.xlabel("baseMean")  # A
+    plt.xlabel("Mean of Normalized Counts")  # A
     plt.suptitle("MA plot")
     up = (testResults[(np.abs(testResults[LFCColumnName]) > lfcThreshold) & (
         testResults[PvalueColumnName] < pValueThreshold)][LFCColumnName] > lfcThreshold).sum()
