@@ -2,3 +2,5 @@ tmp/
 *__pychache__*
 *.ipynb_checkpoints*
 DEGA.egg-info
+tests/
+.vscode

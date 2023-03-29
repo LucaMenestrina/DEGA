@@ -1209,7 +1209,7 @@ class dataset():
         return plotCooks(testResults, baseMean, path)
 
     def transformCounts(self, method="vst", counts=None, normalizedCounts=None, sizeFactors=None,
-                        baseMean=None, dispGeneEsts=None, dispFit=None, fitType=None, fitParams=None,
+                        baseMean=None, dispGeneEsts=None, dispFit=None, fitType=None, fitParams=None, fitFunc=None,
                         minDisp=1e-8, intercept=None, betaPriorVar=None, shift=1):
         """
         Differential expression analysis is carried out on raw counts.
@@ -1262,6 +1262,11 @@ class dataset():
             Required if `method` is `vst`. The parameters of the fitting
             of dispersions to the mean intensity.
             If not provided, it defaults to the fitting parameters of the analysis.
+        
+        fitParams : func, optional
+            Required if `method` is `vst` and `fitType` is `local`. The function uset to fit
+            the dispersions to the mean intensity.
+            If not provided, it defaults to the fitting function of the analysis.
 
         minDisp : float, default=1e-8
             Small value for the minimum dispersion, to allow for calculations in log scale,
@@ -1299,9 +1304,11 @@ class dataset():
             fitType = self._fitType
         if fitParams is None:
             fitParams = self._fitParams
+        if fitFunc is None:
+            fitFunc = self.__dispFitFunc
         if method == "vst":
             self.__transformedCounts = vst(
-                normalizedCounts, sizeFactors, baseMean, dispGeneEsts, fitType, fitParams, minDisp=1e-8)
+                normalizedCounts, sizeFactors, baseMean, dispGeneEsts, fitType, fitParams, minDisp=1e-8, fitFunc=fitFunc)
         elif method == "rlog":
             self.__transformedCounts = rlog(
                 counts, normalizedCounts, sizeFactors, baseMean, dispFit, intercept=None, betaPriorVar=None)

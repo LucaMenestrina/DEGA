@@ -55,6 +55,7 @@ def refitWithoutOutliers(counts, normalizedCounts, phenotypeData, cooks, sizeFac
     nrefit = replace.sum()
     if nrefit > 0:
         meanVarZero = getBaseMeansAndVariances(normalizedCounts, weights)
+        allZero = meanVarZero["allZero"].values
         newAllZero = np.where(replace & allZero)[0]
     if nrefit > 0 and nrefit > len(newAllZero):
         refitReplace = replace & ~allZero
@@ -102,20 +103,6 @@ def refitWithoutOutliers(counts, normalizedCounts, phenotypeData, cooks, sizeFac
         dispFitResultsSub = buildResultsDataFrame(
             {"useForFit": useForFit, "dispFit": dispFitSub}, index=countsSub.index, designMatrix=fullDesignMatrix)
 
-        dispMAPResultsSub = estimateDispersionsMAP(
-            genes=countsSub.index,
-            counts=np.ascontiguousarray(countsSub),
-            dispGeneEsts=dispGeneEstResultsSub["dispGeneEst"].values,
-            dispFit=dispFitSub,
-            mu=muSub,
-            designMatrix=fullDesignMatrix,
-            weights=weightsSub,
-            useWeights=useWeights,
-            weightThreshold=weightThreshold,
-            maxit=maxit,
-            useCR=useCR,
-            compute_d2log_posterior=compute_d2log_posterior,
-        )
         dispMAPResultsSub = estimateDispersionsMAP(
             genes=countsSub.index,
             counts=np.ascontiguousarray(countsSub),
@@ -177,5 +164,4 @@ def refitWithoutOutliers(counts, normalizedCounts, phenotypeData, cooks, sizeFac
             testResults.loc[testResultsSub.index] = testResultsSub
             testResults["maximum Cook's distance"] = newMaxCooks
 
-    return meanVarZero, dispersionsResults, testResults, replace, counts
     return meanVarZero, dispersionsResults, testResults, replace, counts

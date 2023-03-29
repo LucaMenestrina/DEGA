@@ -1,5 +1,5 @@
 __name__ = "DEGA"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Luca Menestrina"
 __license__ = "GPLv3"
 __doc__ = """DEGA: a Python package for differential gene expression analysis

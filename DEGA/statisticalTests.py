@@ -19,7 +19,7 @@ def robustMethodOfMomenthsDisp(normalizedCounts, designMatrix, minReplicates=3):
         _, valid_sample_level, valid_sample_count = np.unique(
             sample_level[validSamples], return_counts=True, return_inverse=True)
         variance = trimmedSampleVariance(
-            normalizedCounts[:, validSamples], valid_sample_level, validSamples)
+            normalizedCounts[:, validSamples], valid_sample_level)
     else:
         variance = trimmedVariance(normalizedCounts)
 

@@ -236,11 +236,11 @@ def estimateDispersionsFit(genes, dispGeneEsts, baseMean, designMatrix, fitType=
                 )
                 dispFit = np.exp(lowess_fit)
 
-            def dispFitFunc(baseMean):
+            def dispFitFunc(baseMeanToFit):
                 return np.exp(sm.nonparametric.lowess(np.log(dispGeneEsts[useForFit][subset]),
                                                       np.log(
                                                           baseMean[useForFit][subset]),
-                                                      xvals=np.log(baseMean)))
+                                                      xvals=np.log(baseMeanToFit)))
             fitParams = {"fitType": "local"}
         elif fitType == "mean":
             useForFit = dispGeneEsts > 10 * minDisp

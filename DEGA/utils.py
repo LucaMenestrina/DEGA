@@ -93,18 +93,18 @@ def trimmedVariance(normalizedCounts):
     return var
 
 
-def trimmedSampleVariance(normalizedCounts, sample_level, valid_samples):
+def trimmedSampleVariance(normalizedCounts, sample_level):
     def trimfn(x): return 1/3 if 0 < x <= 3.5 else 1 / \
                4 if 3.5 < x <= 23.5 else 1/8 if 23.5 < x else None
     valid_sample_levels, valid_sample_idx, valid_sample_counts = np.unique(
-        sample_level[valid_samples], return_inverse=True, return_counts=True)
-    sample_means = np.array([trim_mean(normalizedCounts[:, sample_level[valid_samples] == valid_sample_levels[i]],
+        sample_level, return_inverse=True, return_counts=True)
+    sample_means = np.array([trim_mean(normalizedCounts[:, sample_level == valid_sample_levels[i]],
                                        trimfn(n), axis=1) for i, n in enumerate(valid_sample_counts)]).T
     sqerror = (normalizedCounts - sample_means[:, valid_sample_idx])**2
 
     def scalefn(
         x): return 2.04 if 0 < x <= 3.5 else 1.86 if 3.5 < x <= 23.5 else 1.51 if 23.5 < x else None
-    var = np.array([scalefn(n) * trim_mean(sqerror[:, sample_level[valid_samples]
+    var = np.array([scalefn(n) * trim_mean(sqerror[:, sample_level
                    == valid_sample_levels[i]], trimfn(n), axis=1) for i, n in enumerate(valid_sample_counts)]).T
     max_var = np.max(var, axis=1)
     return max_var

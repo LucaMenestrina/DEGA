@@ -12,7 +12,7 @@ def shiftedLog(normalizedCounts, shift=1):
     return np.log2(normalizedCounts + shift)
 
 
-def vst(normalizedCounts, sizeFactors, baseMean, dispGeneEsts, fitType, fitParams, minDisp=1e-8):
+def vst(normalizedCounts, sizeFactors, baseMean, dispGeneEsts, fitType, fitParams, minDisp=1e-8, fitFunc=None):
     if fitType == "parametric":
         extraPois = fitParams["extraPois"]
         asymptDisp = fitParams["asymptDisp"]
@@ -29,13 +29,7 @@ def vst(normalizedCounts, sizeFactors, baseMean, dispGeneEsts, fitType, fitParam
         xg = np.sinh(np.linspace(np.arcsinh(0), np.arcsinh(
             np.max(normalizedCounts.values)), 1000))[1:]
         xim = np.mean(1/sizeFactors)
-        if not all(useForFit):
-            xgf = np.tile(minDisp, dispGeneEsts[useForFit].shape[0])
-        else:
-            lowess_fit = sm.nonparametric.lowess(
-                np.log(dispGeneEsts[useForFit]), np.log(baseMean[useForFit]), xvals=np.log(xg)
-            )
-            xgf = np.exp(lowess_fit)
+        xgf = fitFunc(xg)
         baseVarsAtGrid = xgf * xg**2 + xim * xg
         integrand = 1 / np.sqrt(baseVarsAtGrid)
         splf = splrep(np.arcsinh((xg[1:] + xg[:-1])/2),

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "DEGA"
-version = "0.1.0"
+version = "0.1.1"
 authors =[{name = "Luca Menestrina", email = "luca.menestrina@protonmail.com"}]
 description = "DEGA: a Python package for differential gene expression analysis"
 readme = "README.md"
