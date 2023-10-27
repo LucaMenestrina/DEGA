@@ -37,7 +37,7 @@ cpdef double trace(double[:, ::1] a):
 cdef double log_posterior(
     double log_alpha,
     np.ndarray[np.int64_t, ndim=1, mode="c"] counts_row,
-    np.ndarray[np.float64_t, ndim=1, mode="c"] mu_row,
+    mu_row,  # np.ndarray[np.float64_t, ndim=1, mode="c"]
     designMatrix,
     double log_alpha_prior_mean,
     double log_alpha_prior_sigmasq,
@@ -100,7 +100,7 @@ cdef double log_posterior(
 cdef double dlog_posterior(
     double log_alpha,
     np.ndarray[np.int64_t, ndim=1, mode="c"] counts_row,
-    np.ndarray[np.float64_t, ndim=1, mode="c"] mu_row,
+    mu_row,  # np.ndarray[np.float64_t, ndim=1, mode="c"]
     designMatrix,
     double log_alpha_prior_mean,
     double log_alpha_prior_sigmasq,
@@ -179,7 +179,7 @@ cdef double dlog_posterior(
 cdef double d2log_posterior(
     double log_alpha,
     np.ndarray[np.int64_t, ndim=1, mode="c"] counts_row,
-    np.ndarray[np.float64_t, ndim=1, mode="c"] mu_row,
+    mu_row,  # np.ndarray[np.float64_t, ndim=1, mode="c"]
     designMatrix,
     double log_alpha_prior_mean,
     double log_alpha_prior_sigmasq,

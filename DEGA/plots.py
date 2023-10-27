@@ -187,7 +187,7 @@ def plotVolcano(testResults, pValueThreshold=0.05, lfcThreshold=0, boundedY=True
                 else:
                     plt.text(X*1.01, Y*1.01, name, fontsize="xx-small",
                              horizontalalignment="right", zorder=100)
-    if highlightedGenesLabels:
+    if highlightGenes and highlightedGenesLabels:
         for name, X, Y in testResults[[LFCColumnName, PvalueColumnName]].loc[highlightGenes].itertuples():
             if X > lfcThreshold:
                 plt.text(X*1.01, -np.log10(Y)*1.01,

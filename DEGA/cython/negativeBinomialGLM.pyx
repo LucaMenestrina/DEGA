@@ -296,7 +296,7 @@ cpdef fitNegativeBinomial(
         np.sqrt(np.maximum(betaResults["beta_var_matrix"], 0))
 
     if forceOptim:
-        rowsForOptim = np.arange(len(betaConv))
+        rowsForOptim = np.arange(betaConv.shape[0])
     else:
         if useOptim:
             rowsForOptim = np.where(np.logical_not(betaConv) | np.logical_not(
@@ -507,7 +507,7 @@ cdef estimateBetaPriorVar(MLE_betaMatrix, designMatrix, normalizedCounts, disper
     if MLE_betaMatrix.shape[0] > 1:
         def col_betaPriorVar(x):
             useFinite = np.abs(x) < 10
-            if np.sum(np.abs(x) < 10) == 0:
+            if np.sum(useFinite) == 0:
                 return 1E6
             else:
                 if betaPriorMethod == "quantile":
@@ -542,7 +542,7 @@ cpdef matchUpperQuantileForVariance(
     if weights is None:
         quantile = np.quantile(np.abs(x), 1-upperQuantile)
     else:
-        x = np.abs(x[weights != 0])
+        x = abs(x[weights != 0])
         weights = weights[weights != 0]
         sorter = np.argsort(x)
         x = x[sorter]

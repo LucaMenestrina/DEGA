@@ -28,6 +28,8 @@ from DEGA.plots import (
     plotCoexpressionNetwork,
 )
 
+from DEGA.SIDE import SIDE  # Switch genes IDEntifier
+
 from DEGA.logger import log
 
 
@@ -68,7 +70,7 @@ class dataset():
     >>> geneCounts = pd.read_csv("path/to/geneCountsFile.csv", index_col=0)
     >>> phenotypeData = pd.read_csv("path/to/phenotypeDataFile.csv", index_col=0)
     >>> geneCounts = geneCounts[phenotypeData.index]
-    >>> DEGA.dataset(geneCounts=geneCounts, phenotypeData=phenotypeData, designFormula="designFormula")
+    >>> dega = DEGA.dataset(geneCounts=geneCounts, phenotypeData=phenotypeData, designFormula="designFormula")
 
     """
 
@@ -366,8 +368,8 @@ class dataset():
                                                     reducedDesignMatrix, betaTolerance,
                                                     weights, useWeights, minmu, maxit,
                                                     useOptim, forceOptim, useT, useQR, alpha,
-                                                    pAdjustMethod, dof, shrink, betaPriorVar,
-                                                    betaPriorMethod, upperQuantile)
+                                                    pAdjustMethod, lfcThreshold, dof, shrink, betaPriorVar,
+                                                    betaPriorMethod, upperQuantile)  # shrink stands for betaPrior
 
         if sufficientReplicates(designMatrix, minReplicatesForReplace).any():
             log.info("Refitting Without Outliers")
@@ -385,7 +387,7 @@ class dataset():
                                             dispPriorVar, weights, useWeights, weightThreshold, minDisp,
                                             kappa0, dispTolerance, betaTolerance, niter, linearMu, alphaInit,
                                             fitType, maxit, useOptim, forceOptim, useT, useQR, alpha,
-                                            pAdjustMethod, dof, shrink, betaPriorVar, betaPriorMethod,
+                                            pAdjustMethod, lfcThreshold, dof, shrink, betaPriorVar, betaPriorMethod,
                                             upperQuantile, useCR, minmu, outlierSD, compute_d2log_posterior,
                                             minReplicatesForReplace, cooksCutoff)  # shrink stands for betaPrior
             self.__allZero = self.__meanVarZero["allZero"].values
@@ -467,7 +469,7 @@ class dataset():
                           reducedDesignMatrix=None, betaTolerance=1e-8, weights=None,
                           useWeights=False, minmu=0.5, maxit=100, useOptim=True,
                           forceOptim=False, useT=False, useQR=True, alpha=0.05,
-                          pAdjustMethod="fdr_bh", dof=None, betaPrior=False,
+                          pAdjustMethod="fdr_bh", lfcThreshold=0, dof=None, betaPrior=False,
                           betaPriorVar=None, betaPriorMethod="weighted", upperQuantile=0.05):
         if test == "Wald":
             (
@@ -477,7 +479,7 @@ class dataset():
             ) = WaldTest(np.ascontiguousarray(counts), np.ascontiguousarray(normalizedCounts),
                          sizeFactors, dispersionsResults, meanVarZero, designMatrix,
                          betaTolerance, weights, useWeights, minmu, maxit, useOptim,
-                         forceOptim, useT, useQR, dof, alpha, pAdjustMethod, betaPrior,
+                         forceOptim, useT, useQR, dof, alpha, pAdjustMethod, lfcThreshold, betaPrior,
                          betaPriorVar, betaPriorMethod, upperQuantile)
         elif test == "LRT":
             if reducedDesignMatrix is None:
@@ -506,7 +508,7 @@ class dataset():
                                kappa0=1, dispTolerance=1e-6, betaTolerance=1e-8,
                                niter=1, linearMu=None, alphaInit=None, fitType="parametric",
                                maxit=100, useOptim=True, forceOptim=False, useT=False,
-                               useQR=True, alpha=0.05, pAdjustMethod="fdr_bh", dof=None,
+                               useQR=True, alpha=0.05, pAdjustMethod="fdr_bh", lfcThreshold=0, dof=None,
                                betaPrior=False, betaPriorVar=None, betaPriorMethod="weighted",
                                upperQuantile=0.05, useCR=True, minmu=0.5, outlierSD=2,
                                compute_d2log_posterior=False, minReplicatesForReplace=7, cooksCutoff=None):
@@ -518,7 +520,7 @@ class dataset():
                                     weightThreshold, minDisp, kappa0, dispTolerance,
                                     betaTolerance, niter, linearMu, alphaInit, fitType,
                                     maxit, useOptim, forceOptim, useT, useQR, alpha,
-                                    pAdjustMethod, dof, betaPrior, betaPriorVar,
+                                    pAdjustMethod, lfcThreshold, dof, betaPrior, betaPriorVar,
                                     betaPriorMethod, upperQuantile, useCR, minmu,
                                     outlierSD, compute_d2log_posterior,
                                     minReplicatesForReplace, cooksCutoff)
@@ -1264,7 +1266,7 @@ class dataset():
             If not provided, it defaults to the fitting parameters of the analysis.
         
         fitParams : func, optional
-            Required if `method` is `vst` and `fitType` is `local`. The function uset to fit
+            Required if `method` is `vst` and `fitType` is `local`. The function used to fit
             the dispersions to the mean intensity.
             If not provided, it defaults to the fitting function of the analysis.
 
@@ -1351,8 +1353,14 @@ class dataset():
             If not specified defaults to `lfcThreshold`.
 
         correlationMethod : str, default="spearman"
-            Linkage method to use for calculating clusters.
-            See ``scipy.cluster.hierarchy.linkage()`` documentation for more information.
+            Method of correlation:
+            * pearson : standard correlation coefficient
+            * kendall : Kendall Tau correlation coefficient
+            * spearman : Spearman rank correlation
+            * callable: callable with input two 1d ndarrays
+                and returning a float. Note that the returned matrix from corr
+                will have 1 along the diagonals and will be symmetric
+                regardless of the callable's behavior.
         """
         if transformedCounts is None:
             try:
@@ -1377,6 +1385,106 @@ class dataset():
                 method=correlationMethod)
             np.fill_diagonal(adjacencyMatrix.values, 0)
         return adjacencyMatrix
+
+    def identifySwitchGenes(self, expressionData=None, significantGenes=None, correlationMethod="pearson",
+                        thresholdType="correlation", completeScan=False, multipleTestsCorrectionMethod="fdr_bh", significanceThreshold=0.05,
+                        correlationThreshold=None, ratioLargestComponent=0.09, clusteringMethod="greedy_modularity", numClusters=None, randomSeed=12345):
+        """
+        Identify the switch genes (using the SIDE module).
+        Switch genes are likely to be key players in large-scale transcriptomic transitions.
+        Ref https://academic.oup.com/plcell/article/26/12/4617/6102410
+
+        Parameters
+        ----------
+        expressionData : pandas.DataFrame, optional
+            Matrix of the counts
+        
+        significantGenes : numpy.ndarray, optional
+            Array of significant genes determined by differential expression analysis
+        
+        correlationMethod : string, default="pearson"
+            Correlation method for building the correlation matrix.
+            See ``pandas.DataFrame.corr`` documentation for more information.
+
+        thresholdType : {"correlation", "significance"}, default="correlation"
+            Either "correlation" or "significance", for the type of threshold to be used in filtering the correlation matrix:
+            Correlation performs an integrity test and keeps the highest correlation threshold leading to a fully connected network.
+            Significance performs a double-sided t-test and keeps all values significant considering ```significance_threshold``` as reference value
+
+        completeScan : bool, default=False
+            Whether to perform a full correlation scan in the integrity test
+            or limit it between the 0.5 and 0.99 quantiles of the correlations distribution
+            Only used if ```thresholdType == "correlation"```
+
+        multipleTestsCorrectionMethod : string, default="fdr_bh"
+            Method used for testing and adjustment of pvalues. Can be either the full name or initial letters. Available methods are:
+                bonferroni : one-step correction
+                sidak : one-step correction
+                holm-sidak : step down method using Sidak adjustments
+                holm : step-down method using Bonferroni adjustments
+                simes-hochberg : step-up method (independent)
+                hommel : closed method based on Simes tests (non-negative)
+                fdr_bh : Benjamini/Hochberg (non-negative)
+                fdr_by : Benjamini/Yekutieli (negative)
+                fdr_tsbh : two stage fdr correction (non-negative)
+                fdr_tsbky : two stage fdr correction (non-negative)
+            See statsmodels.stats.multitest.multipletest for more
+        
+        significanceThreshold : float, default=0.05
+            Value for determining the significance of the correlations
+            Only used if ```thresholdType == "significance"```
+        
+        correlationThreshold : float, optional
+            Value for filtering the correlation matrix.
+            If set, the integrity test will not be performed and this value will be used instead
+        
+        ratioLargestComponent : float, default=0.99
+            Minimum ratio of nodes in the largest component.
+            The integrity test is stopped if the largest component
+            contains fewer than ```ratioLargestComponent``` of the total nodes.
+
+        clusteringMethod : {"greedy_modularity", "kmeans"}, default="greedy_modularity"
+            Clustering method for identifing network communities
+
+        numClusters : int, optional
+            Number of clusters
+            Only used if ```clustering_method == "kmeans"```
+
+        randomSeed : int, default=12345
+            Set the random state for kmeans clustering.
+            It is the seed used by the random number generator.
+            Only used if ```clustering_method == "kmeans"```
+        """
+        if expressionData is None:
+            expressionData = self.transformCounts()
+        if significantGenes is None:
+            if hasattr(self, "significantGenes"):
+                significantGenes = self.significantGenes
+            else:
+                raise Exception("`significantGenes` not provided, run the differential expression analysis first")
+        expressionData = expressionData.loc[significantGenes]
+        self.__side = SIDE(expressionData, significantGenes)
+        self.__switchGenes = self.__side.identifySwitchGenes(expressionData, significantGenes, correlationMethod,
+                        thresholdType, completeScan, multipleTestsCorrectionMethod, significanceThreshold,
+                        correlationThreshold, ratioLargestComponent, clusteringMethod, numClusters, randomSeed)
+        return self.__switchGenes
+
+    @property
+    def _side(self):
+        """
+        SIDE module object
+        It could be used for custom analyses or plots
+        """
+        return self.__side
+    
+    @property
+    def switchGenes(self):
+        """
+        Switch Genes.
+        Switch genes are likely to be key players in large-scale transcriptomic transitions.
+        Ref https://academic.oup.com/plcell/article/26/12/4617/6102410
+        """
+        return self.__switchGenes
 
     @property
     def results(self):
@@ -1429,18 +1537,30 @@ class dataset():
         log.info(self)
 
     @property
-    def significantGenes(self):
+    def significantGenes(self, pValueThreshold=None, lfcThreshold=None):
         """
         Genes having an adjusted p-value below `pValueThreshold` and
         a absolute log2 fold change higher than `lfcThreshold`.
+
+        pValueThreshold : float, optional
+            A non-negative value which specifies a threshold for the p-value.
+            If not specified defaults to `alpha`.
+
+        lfcThreshold : float, optional
+            A non-negative value which specifies a threshold for the log2 fold change.
+            If not specified defaults to `lfcThreshold`.
         """
+        if pValueThreshold is None:
+            pValueThreshold = self.alpha
+        if lfcThreshold is None:
+            lfcThreshold = self.lfcThreshold
         LFCColumnName = [col for col in self.results.columns if (
             col.startswith("log2 fold change") and "Intercept" not in col)][0]
         PvalueColumnName = [col for col in self.results.columns if (
             col.startswith("adjusted p-value") and "Intercept" not in col)][0]
-        significantGenes = self.results[(np.abs(self.results[LFCColumnName]) > self.lfcThreshold) & (
-            self.results[PvalueColumnName] < self.pValueThreshold)]
-        return significantGenes
+        significantGenes = self.results[(np.abs(self.results[LFCColumnName]) > lfcThreshold) & (
+            self.results[PvalueColumnName] < pValueThreshold)]
+        return np.array(significantGenes.index)
 
     @property
     def geneCounts(self):
@@ -1556,6 +1676,14 @@ class dataset():
     def alpha(self):
         """
         A non-negative value which specifies a threshold for the p-value.
+        """
+        return self.__alpha
+
+    @property
+    def pValueThreshold(self):
+        """
+        A non-negative value which specifies a threshold for the p-value.
+        Alias for alpha
         """
         return self.__alpha
 

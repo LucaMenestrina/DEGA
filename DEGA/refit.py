@@ -45,7 +45,7 @@ def refitWithoutOutliers(counts, normalizedCounts, phenotypeData, cooks, sizeFac
                          weightThreshold=1e-2, minDisp=1e-8, kappa0=1, dispTolerance=1e-6,
                          betaTolerance=1e-8, niter=1, linearMu=None, alphaInit=None, fitType="parametric",
                          maxit=100, useOptim=True, forceOptim=False, useT=False, useQR=True, alpha=0.05,
-                         pAdjustMethod="fdr_bh", dof=None, betaPrior=False, betaPriorVar=None,
+                         pAdjustMethod="fdr_bh", lfcThreshold=0, dof=None, betaPrior=False, betaPriorVar=None,
                          betaPriorMethod="weighted", upperQuantile=0.05, useCR=True, minmu=0.5,
                          outlierSD=2, compute_d2log_posterior=False, minReplicatesForReplace=7, cooksCutoff=None):
     allZero = meanVarZero["allZero"].values
@@ -134,7 +134,7 @@ def refitWithoutOutliers(counts, normalizedCounts, phenotypeData, cooks, sizeFac
             ) = WaldTest(np.ascontiguousarray(countsSub), np.ascontiguousarray(normalizedCountsSub),
                          sizeFactors, dispersionsResultsSub, meanVarZeroSub, fullDesignMatrix,
                          betaTolerance, weightsSub, useWeights, minmu, maxit, useOptim,
-                         forceOptim, useT, useQR, dof, alpha, pAdjustMethod, betaPrior,
+                         forceOptim, useT, useQR, dof, alpha, pAdjustMethod, lfcThreshold, betaPrior,
                          betaPriorVar, betaPriorMethod, upperQuantile)
         elif test == "LRT":
             if reducedDesignMatrix is None:

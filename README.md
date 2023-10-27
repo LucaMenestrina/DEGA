@@ -9,7 +9,7 @@
 </div>
 
 **Differential gene expression analysis** is an important tool for identifying genes that display a significantly altered expression in response to specific stimuli.  
-**DEGA** is a Python package for differential expression analysis. It is an implementation of the core algorithm of the [R package DESeq2](https://bioconductor.org/packages/DESeq2/). Along with the differential testing algorithm, DEGA also provides high-level functions for **dataset exploration** and **results interpretation**.
+**DEGA** is a Python package for differential expression analysis. It is an implementation of the core algorithm of the [R package DESeq2](https://bioconductor.org/packages/DESeq2/). Along with the differential testing algorithm, DEGA also provides high-level functions for **dataset exploration** and **results interpretation** (such as switch genes identification).
 
 #### Installation
 ```python
@@ -23,7 +23,8 @@ import DEGA
 dega = DEGA.dataset(countsData, phenotypeData, designFormula="factor")
 dega.analyse()
 ```
-For a complete use case check the [Jupyter Notebook](https://github.com/LucaMenestrina/DEGA/blob/main/validation/DEGA.ipynb)
+For a complete use case check the [Jupyter Notebook](https://github.com/LucaMenestrina/DEGA/blob/main/validation/DEGA.ipynb)  
+For a switch genes identification example check the [Jupyter Notebook](https://github.com/LucaMenestrina/DEGA/blob/main/case_study/switchGenes.ipynb)  
 
 <!--
 #### Citation Note

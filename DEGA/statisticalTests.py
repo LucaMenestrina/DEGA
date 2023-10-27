@@ -93,7 +93,7 @@ def adjustPValue(pvalues, baseMean, alpha=0.05, method="fdr_bh"):
 def WaldTest(counts, normalizedCounts, sizeFactors, dispersionsResults, meanVarZero,
              designMatrix, betaTolerance=1e-8, weights=None, useWeights=False, minmu=0.5,
              maxit=100, useOptim=True, forceOptim=False, useT=False, useQR=True, dof=None,
-             alpha=0.05, pAdjustMethod="fdr_bh", betaPrior=False, betaPriorVar=None,
+             alpha=0.05, pAdjustMethod="fdr_bh", lfcThreshold=0, betaPrior=False, betaPriorVar=None,
              betaPriorMethod="weighted", upperQuantile=0.05):
     dispersions = dispersionsResults["dispersion"].values
     baseMean = meanVarZero["baseMean"].values
@@ -121,11 +121,29 @@ def WaldTest(counts, normalizedCounts, sizeFactors, dispersionsResults, meanVarZ
             betaPriorMethod,   # "weighted"
             upperQuantile,  # 0.05
         )
-        fitResults = priorFitResults["fit"]
         diagonals = priorFitResults["diagonals"]
         mu = priorFitResults["mu"]
         betaPriorVar = priorFitResults["betaPriorVar"]
         MLE_beta_matrix = priorFitResults["MLE_betaMatrix"]
+        if lfcThreshold != 0:
+            fitResults = priorFitResults["fit"]
+        else:
+            fitResults = fitNegativeBinomial(
+                counts,  # counts
+                normalizedCounts,  # normalizedCounts
+                sizeFactors,  # sizeFactors
+                designMatrix,  # designMatrix
+                dispersions,  # dispersions
+                betaTolerance,  # betaTolerance
+                None,  # lambda_term
+                maxit,  # maxit
+                useOptim,   # useOptim
+                forceOptim,  # forceOptim
+                useQR,   # useQR
+                weights,  # weights
+                useWeights,   # useWeights
+                minmu,  # minmu
+            )
     else:
         fitResults = fitNegativeBinomial(
             counts,  # counts
@@ -182,6 +200,10 @@ def WaldTest(counts, normalizedCounts, sizeFactors, dispersionsResults, meanVarZ
     if not betaConv.all():
         raise RuntimeError(
             "Some rows did not converge in beta. Use larger maxit argument with WaldTest")
+
+    if betaPrior and lfcThreshold == 0:
+        betaMatrix = priorFitResults["fit"]["betaMatrix"]
+        betaSE = priorFitResults["fit"]["betaSE"]
 
     mleBetas = MLE_beta_matrix if betaPrior else None
     mleInfo = "MLE" if betaPrior else None
@@ -307,14 +329,14 @@ def adjustForOutliers(counts, phenotypeData, test, testResults, designMatrix, be
     T = lfcThreshold
     SE = testResults[SEColumnName].values
 
-    if test == "Wald" and lfcThreshold != 0:
+    if test == "Wald" and not((lfcThreshold == 0) and (altHypothesis == "greaterAbs")):
         if useT:
             dof = testResults["t degrees of freedom for Wald test"]
             def pfunc(x): return t.sf(x, dof)
         else:
             def pfunc(x): return norm.sf(x)
         if altHypothesis == "greaterAbs":
-            newStat = np.sign(T) * np.maximum((np.abs(LFC) - T)/SE, 0)
+            newStat = np.sign(LFC) * np.maximum((np.abs(LFC) - T)/SE, 0)
             newPvalue = np.minimum(2 * pfunc((np.abs(LFC) - T)/SE), 1)
         elif altHypothesis == "lessAbs":
             newStatAbove = np.maximum((T-LFC)/SE, 0)

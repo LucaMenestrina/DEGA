@@ -299,7 +299,7 @@ def estimateDispersionsPriorVar(dispGeneEsts, dispFit, designMatrix, minDisp=1e-
         obsDist = dispResiduals[aboveMinDisp]
         breaks = np.arange(-9.5, 10, 0.5)
         obsDist = obsDist[(obsDist > -10) & (obsDist < 10)]
-        obsVarGrid = np.lispace(0, 8, 200)
+        obsVarGrid = np.linspace(0, 8, 200)
         obsDistHistDensity, _ = np.histogram(obsDist, breaks, density=True)
 
         def tmp_func(x):
@@ -308,7 +308,7 @@ def estimateDispersionsPriorVar(dispGeneEsts, dispFit, designMatrix, minDisp=1e-
             randDist = randDist[(randDist > -10) & (randDist < 10)]
             randDistHistDensity, _ = np.histogram(
                 randDist, breaks, density=True)
-            z = (obsDistHistDensity, randDistHistDensity)
+            z = np.array([obsDistHistDensity, randDistHistDensity])
             small = min(z[z > 0])
             kl = (obsDistHistDensity * (np.log(obsDistHistDensity
                   + small)-np.log(randDistHistDensity+small))).sum()
@@ -316,7 +316,7 @@ def estimateDispersionsPriorVar(dispGeneEsts, dispFit, designMatrix, minDisp=1e-
         tmp_func = np.vectorize(tmp_func)
         klDivs = tmp_func(obsVarGrid)
 
-        obsVarFineGrid = np.lispace(0, 8, 1000)
+        obsVarFineGrid = np.linspace(0, 8, 1000)
         lowess_fit = sm.nonparametric.lowess(
             klDivs, obsVarGrid, xvals=obsVarFineGrid
         )  # frac=0.2 may lead to instabilities
@@ -325,7 +325,7 @@ def estimateDispersionsPriorVar(dispGeneEsts, dispFit, designMatrix, minDisp=1e-
         expVarLogDisp = trigamma((m - p) / 2)
         dispPriorVar = np.maximum(minKL, 0.25)
 
-        return dispPriorVar
+        return dispPriorVar, varLogDispEsts
     elif m > p:
         expVarLogDisp = trigamma((m - p) / 2)
         dispPriorVar = np.maximum((varLogDispEsts - expVarLogDisp), 0.25)
